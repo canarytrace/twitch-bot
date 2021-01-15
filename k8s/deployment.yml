@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canarytrace
+  labels:
+    app: canarytrace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canarytrace
+  template:
+    metadata:
+      labels:
+        app: canarytrace
+    spec:
+      containers:
+      - name: canary
+        image: quay.io/canarytrace/smoke-pro:3.0.1
+        env:
+        - name: BASE_URL
+          value: "https://www.tesla.com/;http://canarytrace.com/"
+        - name: SMOKE
+          value: allow
+        - name: ELASTIC_CLUSTER
+          value: "https://XXX.europe-west3.gcp.cloud.es.io:9243"
+        - name: ELASTIC_HTTP_AUTH
+          value: "elastic:XXX"
+        - name: AT_DRIVER_HOST_NAME
+          value: "localhost"
+        - name: PT_AUDIT
+          value: allow
+        - name: PT_AUDIT_THROTTLING
+          value: 'desktopDense4G'
+        resources:
+          requests:
+            memory: "300Mi"
+            cpu: "200m"
+          limits:
+            memory: "400Mi"
+            cpu: "300m"
+        imagePullPolicy: "IfNotPresent"
+      - name: selenium
+        image: selenium/standalone-chrome:3.141.59-20200730
+        ports:
+          - containerPort: 4444
+        resources:
+          requests:
+            memory: "4000Mi"
+            cpu: "2000m"
+          limits:
+            memory: "6000Mi"
+            cpu: "4000m"
+        imagePullPolicy: "IfNotPresent"
+        volumeMounts:
+          - mountPath: "/dev/shm"
+            name: "dshm"
+        livenessProbe:
+          httpGet:
+            path: /wd/hub
+            port: 4444
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /wd/hub
+            port: 4444
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+      restartPolicy: "Always"
+      volumes:
+        - name: "dshm"
+          emptyDir:
+            medium: "Memory"
