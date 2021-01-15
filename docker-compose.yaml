@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  twitch-bot:
+    image: quay.io/canarytrace/twitch-bot:1.1
+    environment:
+      BOT_USERNAME: $BOT_USERNAME
+      OAUTH_TOKEN: $OAUTH_TOKEN
+      CHANNEL_NAME: $CHANNEL_NAME
